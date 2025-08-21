@@ -1,7 +1,11 @@
 ﻿using Application.Dtos;
 using Application.IService;
+using Application.Users.Commands;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace demo_api.Controllers
 {
@@ -9,17 +13,18 @@ namespace demo_api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _user;
+        private readonly ISender _sender;
 
-        public AuthController(IUserService user)
+        public AuthController(ISender sender)
         {
-            _user = user;
+            _sender = sender;
+
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto body)
+        public async Task<IActionResult> Login(LoginCommand body)
         {
-            var result = await _user.Login(body.Username, body.Password);
+            var result = await _sender.Send(body);
             if (result == null)
             {
                 return Unauthorized(new { message = "Wrong username or password" });
@@ -42,7 +47,10 @@ namespace demo_api.Controllers
                 return Unauthorized(new { message = "Refresh token not found in cookies" });
             }
 
-            var result = await _user.RefreshTokenHandler(refreshToken);
+            var result = await _sender.Send(new RefreshTokenCommand
+            {
+                refreshToken = refreshToken
+            });
             if (result == null)
             {
                 return Unauthorized(new { message = "Invalid refresh token" });
@@ -71,7 +79,11 @@ namespace demo_api.Controllers
 
             var accessToken = authHeader.Substring("Bearer ".Length).Trim();
 
-            var result = await _user.LogOutAsync(userId, accessToken);
+            var result = await _sender.Send(new LogoutCommand
+            {
+                userId=userId, 
+                accessToken= accessToken
+            });
             if (!result)
                 return BadRequest(new { message = "Logout failed" });
 

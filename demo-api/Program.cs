@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 namespace demo_api
 {
     public class Program
@@ -62,7 +63,7 @@ namespace demo_api
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnAuthenticationFailed = async context =>
+                    OnAuthenticationFailed = async context => 
                     {
                         if (context.Exception is SecurityTokenExpiredException)
                         {
@@ -84,7 +85,10 @@ namespace demo_api
             builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
             builder.Services.AddScoped<IBlackListRepository, BlackListRepository>();
-
+            builder.Services.AddMediatR(configuration =>
+            {
+                configuration.RegisterServicesFromAssembly(Assembly.Load("Application"));
+            });
 
             var app = builder.Build();
        

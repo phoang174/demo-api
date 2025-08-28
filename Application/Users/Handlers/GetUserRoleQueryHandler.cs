@@ -1,4 +1,5 @@
-﻿using Application.Users.Queries;
+﻿using Application.Results;
+using Application.Users.Queries;
 using Domain.Entity;
 using Domain.IRepository;
 using MediatR;
@@ -10,16 +11,17 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Handlers
 {
-    public class GetUserRoleQueryHandler : IRequestHandler<GetUserRolesQuery, List<Role>>
+    public class GetUserRoleQueryHandler : IRequestHandler<GetUserRolesQuery, Result<List<Role>>>
     {
         private readonly IRoleRepository roleRepository;
         public GetUserRoleQueryHandler(IRoleRepository roleRepository)
         {
             this.roleRepository = roleRepository;
         }
-        public async Task<List<Role>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<Role>>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
         {
-            return await this.roleRepository.GetAllItemAsync();
+            var response = await this.roleRepository.GetAllItemAsync();
+            return Result<List<Role>>.Ok(response);
         }
     }
 }

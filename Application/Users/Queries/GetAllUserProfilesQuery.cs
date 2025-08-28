@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Application.Results;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Queries
 {
-    public class GetAllUserProfilesQuery : IRequest<List<UserProfile>>
+    public class GetAllUserProfilesQuery : IRequest<Result<List<UserProfile>>>
     {
     }
 }

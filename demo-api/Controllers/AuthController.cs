@@ -1,9 +1,11 @@
 ﻿using Application.Dtos;
 using Application.IService;
 using Application.Users.Commands;
+using demo_api.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
 using System.Reflection;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -24,18 +26,19 @@ namespace demo_api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginCommand body)
         {
+
             var result = await _sender.Send(body);
-            if (result == null)
+            if (result.IsFailure)
             {
                 return Unauthorized(new { message = "Wrong username or password" });
             }
 
-            SetRefreshTokenCookie(result.RefreshToken);
+            SetRefreshTokenCookie(result.Value.RefreshToken);
 
             return Ok(new
             {
-                user = result.User,
-                accessToken = result.AccessToken
+                user = result.Value.User,
+                accessToken = result.Value.AccessToken
             });
         }
 
@@ -56,12 +59,13 @@ namespace demo_api.Controllers
                 return Unauthorized(new { message = "Invalid refresh token" });
             }
 
-            SetRefreshTokenCookie(result.RefreshToken);
+            var res = result.Value;
+            SetRefreshTokenCookie(res!.RefreshToken);
 
             return Ok(new
             {
-                user = result.User,
-                accessToken = result.AccessToken
+                user = res.User,
+                accessToken = res.AccessToken
             });
         }
 
@@ -81,11 +85,11 @@ namespace demo_api.Controllers
 
             var result = await _sender.Send(new LogoutCommand
             {
-                userId=userId, 
+                userId=77, 
                 accessToken= accessToken
             });
-            if (!result)
-                return BadRequest(new { message = "Logout failed" });
+            if (result.IsFailure)
+                throw new CustomException(result.Error.Message, result.Error.Code, result.Error.Detail);
 
             Response.Cookies.Delete("refreshToken", new CookieOptions
             {

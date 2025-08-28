@@ -1,4 +1,5 @@
-﻿using Application.Users.Commands;
+﻿using Application.Results;
+using Application.Users.Commands;
 using Domain.Entity;
 using Domain.IRepository;
 using MediatR;
@@ -6,7 +7,7 @@ using MediatR;
 
 namespace Application.Users.Handlers
 {
-    public class LogoutCommandHandler : IRequestHandler<LogoutCommand,bool>
+    public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Result>
     {
         private readonly IUserRepository _userRepository;
         private readonly IBlackListRepository _blackListRepository;
@@ -15,10 +16,10 @@ namespace Application.Users.Handlers
             _userRepository = userRepository;
             _blackListRepository = blackListRepository;
         }
-        public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
         {
             var existUser = await this._userRepository.GetByIdAsync(request.userId);
-            if (existUser == null) return false;
+            if (existUser == null) return Result.Fail(LogoutError.NotfoundError);
 
             await this._blackListRepository.AddAsync(new BlackList
             {
@@ -29,7 +30,11 @@ namespace Application.Users.Handlers
             existUser.RefreshToken = "";
             await this._userRepository.UpdateAsync(existUser);
 
-            return true;
+            return Result.Ok();
         }
     }
+    public static class LogoutError
+    {
+        public static Error NotfoundError = new("LogoutCommandHandler.Notfound", "User not found", 400);
+    } 
 }

@@ -24,7 +24,7 @@ namespace demo_api.Controllers
         {
 
             var result = await this._sender.Send(new GetUserRolesQuery { });
-            return Ok(result);
+            return Ok(result.Value);
 
 
         }

@@ -14,11 +14,19 @@ namespace demo_api.Middlewares
             using var newBody = new MemoryStream();
             context.Response.Body = newBody;
 
-            await _next(context); 
+            try
+            {
+                await _next(context); // gọi middleware tiếp theo
+            }
+            catch
+            {
+                context.Response.Body = originalBody;
+                throw; 
+            }
 
             newBody.Seek(0, SeekOrigin.Begin);
             var responseBody = await new StreamReader(newBody).ReadToEndAsync();
-
+        
             object responseData;
             try
             {

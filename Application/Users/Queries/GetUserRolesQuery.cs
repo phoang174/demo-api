@@ -1,4 +1,5 @@
-﻿using Domain.Entity;
+﻿using Application.Results;
+using Domain.Entity;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Queries
 {
-    public class GetUserRolesQuery :IRequest<List<Role>>
+    public class GetUserRolesQuery :IRequest<Result<List<Role>>>
     {
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Application.Results;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Commands
 {
-    public class UpdateUserCommand : IRequest<UserProfile>
+    public class UpdateUserCommand : IRequest<Result<UserProfile>>
     {
         public int Id { get; set; }
         public string Username { get; set; }

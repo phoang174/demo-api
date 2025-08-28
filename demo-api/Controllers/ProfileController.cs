@@ -4,11 +4,13 @@ using Application.Service;
 using Application.Users.Commands;
 using Application.Users.Queries;
 using demo_api.Attributes;
+using demo_api.Exceptions;
 using Domain.Entity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace demo_api.Controllers
 {
@@ -28,25 +30,32 @@ namespace demo_api.Controllers
         {
             var result = await this._sender.Send(new GetAllUserProfilesQuery{ });
            
-            return Ok(result);
+            return Ok(result.Value);
         }
 
         [HttpPost]
         [Authorize(Roles = "Staff,Admin,SuperAdmin")]
         public async Task<IActionResult> createUserProfile(CreateUserCommand command) {
 
-            //var result = await this._userService.CreateUserProfile(createProfileDto);
+            
             var result = await _sender.Send(command);
-            return Ok(result);
+            if (result.IsFailure)
+            {
+                throw new CustomException(result.Error.Message, result.Error.Code, result.Error.Detail);
+
+            }
+            return Ok(result.Value);
 
 
         }
         [HttpDelete("{userId}")]
         [Authorize(Roles = "Staff,Admin,SuperAdmin")]
-        public async Task<IActionResult> deleteUser(int userId)
+        public async Task<IActionResult> deleteUser([FromRoute] DeleteUserCommand command)
         {
-
-            //await this._userService.DeleteUser(userId);
+            var result = await _sender.Send(command);
+            if (result.IsFailure) {
+                throw new CustomException(result.Error.Message, result.Error.Code, result.Error.Detail);
+            }
             return Ok();
 
 
@@ -57,7 +66,11 @@ namespace demo_api.Controllers
         {
 
             var result = await this._sender.Send(command);
-            return Ok(result);
+            if (result.IsFailure) {
+                throw new CustomException(result.Error.Message, result.Error.Code, result.Error.Detail);
+
+            }
+            return Ok(result.Value);
 
 
         }

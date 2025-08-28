@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Application.Results;
 using Application.Users.Queries;
 using Domain.IRepository;
 using MediatR;
@@ -10,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Handlers
 {
-    public class GetAllUserProfilesQueryHandler : IRequestHandler<GetAllUserProfilesQuery, List<UserProfile>>
+    public class GetAllUserProfilesQueryHandler : IRequestHandler<GetAllUserProfilesQuery, Result<List<UserProfile>>>
     {
         private readonly IUserRepository _userRepository;
         public GetAllUserProfilesQueryHandler(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }
-        public async Task<List<UserProfile>> Handle(GetAllUserProfilesQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<UserProfile>>> Handle(GetAllUserProfilesQuery request, CancellationToken cancellationToken)
         {
             var users = await this._userRepository.GetAllItemAsync();
 
@@ -42,7 +43,7 @@ namespace Application.Users.Handlers
                 }
             }
 
-            return result;
+            return Result<List<UserProfile>>.Ok(result);
         }
     }
 }

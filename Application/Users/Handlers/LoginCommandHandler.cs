@@ -1,5 +1,6 @@
 ﻿using Application.Dtos;
 using Application.IService;
+using Application.Results;
 using Application.Users.Commands;
 using Domain.Entity;
 using Domain.IRepository;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Handlers
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
+    public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IJwtService _jwtService;
@@ -23,10 +24,11 @@ namespace Application.Users.Handlers
             _userRepository = userRepository;
             _jwtService = jwtService;
         }
-        public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<Result<LoginResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var user = CheckUsernamePassword(request.username, request.password);
-            if (user == null) return null;
+            if (user == null) return Result<LoginResult>.Fail(LoginError.WrongUsernamOrPassword);
+
 
             var refreshToken = _jwtService.GenerateRefreshToken(user);
             var accessToken = _jwtService.GenerateAccessToken(user);
@@ -34,13 +36,14 @@ namespace Application.Users.Handlers
             user.RefreshToken = refreshToken;
             await _userRepository.UpdateAsync(user);
             var roles = await this._userRepository.GetUserRolesAsync(user.Id);
-            return new LoginResult
+            var res = new LoginResult
             {
 
                 User = new UserResponseDto { Id = user.Id, Username = user.Username, Roles = roles },
                 AccessToken = accessToken,
                 RefreshToken = refreshToken
             };
+            return  Result<LoginResult>.Ok(res);
         }
         private User? CheckUsernamePassword(string username, string password)
         {
@@ -52,6 +55,9 @@ namespace Application.Users.Handlers
 
             return result == PasswordVerificationResult.Success ? user : null;
         }
-
+        public static class LoginError
+        {
+            public static Error WrongUsernamOrPassword = new("LoginCommandHandler.WrongUsernamOrPassword", "WrongUsernamOrPassword", 400);
+        }
     }
 }

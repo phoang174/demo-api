@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Application.Results;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.Commands
 {
-    public class LoginCommand : IRequest<LoginResult>
+    public class LoginCommand : IRequest<Result<LoginResult>>
     {
         public string username { get; set; }
         public string password { get; set; }

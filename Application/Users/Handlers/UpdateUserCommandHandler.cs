@@ -1,13 +1,15 @@
 ﻿using Application.Dtos;
+using Application.Results;
 using Application.Users.Commands;
 using Domain.Entity;
 using Domain.IRepository;
 using MediatR;
+using System.Net.WebSockets;
 
 
 namespace Application.Users.Handlers
 {
-    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, UserProfile>
+    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result<UserProfile>>
     {
         private readonly IUserRepository _userRepository;
         public UpdateUserCommandHandler(IUserRepository userRepository)
@@ -15,10 +17,10 @@ namespace Application.Users.Handlers
             _userRepository = userRepository;
         }
 
-        public async Task<UserProfile> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+        public async Task<Result<UserProfile>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
             var user = await this._userRepository.GetByIdAsync(request.Id);
-            if (user == null) throw new Exception("User not found");
+            if (user == null) return Result<UserProfile>.Fail(UpdateUserError.UserNotFound);
 
             if (user.Profile == null)
             {
@@ -43,7 +45,7 @@ namespace Application.Users.Handlers
             user = await _userRepository.GetByIdAsync(user.Id);
 
             var roles = user.UserRole.Select(e => e.Role.RoleName).ToList();
-            return new UserProfile
+            var response =  new UserProfile
             {
                 UserId = user.Id,
                 Username = user.Username,
@@ -51,6 +53,11 @@ namespace Application.Users.Handlers
                 Email = user.Profile.Email,
                 Roles = roles
             };
+            return Result<UserProfile>.Ok(response);
         }
+    }
+    public static class UpdateUserError
+    {
+        public static Error UserNotFound = new("UpdateUserCommandHandler.UserNotFound", "User Not Found", 400);
     }
 }

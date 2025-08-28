@@ -24,17 +24,19 @@ namespace demo_api.Exceptions
                 httpContext.Response.StatusCode = customEx.StatusCode;
                 httpContext.Response.ContentType = "application/json";
 
-          
-                var context = new ProblemDetailsContext
+                
+                      var context = new ProblemDetailsContext
                 {
                     HttpContext = httpContext,
                     Exception = exception,
                     ProblemDetails = new ProblemDetails
                     {
-                        Detail = customEx.Message,
-                        Status = customEx.StatusCode
+                        Detail = customEx.Detail,
+                        Status = customEx.StatusCode,
+                        Title = customEx.Message,     
+
                     }
-                };
+                      };
 
                 return await problemDetailsService.TryWriteAsync(context);
             }

@@ -1,27 +1,35 @@
 
+using Application.Behaviors;
 using Application.IService;
 using Application.Service;
+using Application.Users.Commands;
 using demo_api.Controllers;
 using demo_api.Exceptions;
 using demo_api.Middlewares;
 using Domain.IRepository;
+using FluentValidation;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Repository;
 using Infrastructure.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 namespace demo_api
 {
-    public class Program
+    public  class Program
     {
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddProblemDetails();
             
+            builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+
             builder.Services.AddExceptionHandler<CustomExceptionHandler>();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -62,7 +70,7 @@ namespace demo_api
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnAuthenticationFailed = async context =>
+                    OnAuthenticationFailed = async context => 
                     {
                         if (context.Exception is SecurityTokenExpiredException)
                         {
@@ -73,18 +81,29 @@ namespace demo_api
                 };
 
              });
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly);
+            });
+
+            builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+            builder.Services.AddValidatorsFromAssembly(typeof(Application.AssemblyReference).Assembly, includeInternalTypes: true);
 
             builder.Services.AddAuthorization();
-            builder.Services.AddScoped<IUserService, UserService>();
+            //builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IJwtService, JwtService>();
-            builder.Services.AddScoped<IRoleService, RoleService>();
+            //builder.Services.AddScoped<IRoleService, RoleService>();
 
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
             builder.Services.AddScoped<IBlackListRepository, BlackListRepository>();
-
+            builder.Services.AddMediatR(configuration =>
+            {
+                configuration.RegisterServicesFromAssembly(Assembly.Load("Application"));
+            });
 
             var app = builder.Build();
        
@@ -95,9 +114,9 @@ namespace demo_api
                 app.UseSwaggerUI();
             }
             app.UseCors("AllowAll");
+            app.UseExceptionHandler();
 
             app.UseHttpsRedirection();
-            app.UseExceptionHandler();
 
             app.UseAuthentication();
 
@@ -112,4 +131,5 @@ namespace demo_api
             app.Run();
         }
     }
+
 }

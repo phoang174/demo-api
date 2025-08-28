@@ -1,7 +1,13 @@
 ﻿using Application.Dtos;
 using Application.IService;
+using Application.Users.Commands;
+using demo_api.Exceptions;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
+using System.Reflection;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace demo_api.Controllers
 {
@@ -9,28 +15,30 @@ namespace demo_api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _user;
+        private readonly ISender _sender;
 
-        public AuthController(IUserService user)
+        public AuthController(ISender sender)
         {
-            _user = user;
+            _sender = sender;
+
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto body)
+        public async Task<IActionResult> Login(LoginCommand body)
         {
-            var result = await _user.Login(body.Username, body.Password);
-            if (result == null)
+
+            var result = await _sender.Send(body);
+            if (result.IsFailure)
             {
                 return Unauthorized(new { message = "Wrong username or password" });
             }
 
-            SetRefreshTokenCookie(result.RefreshToken);
+            SetRefreshTokenCookie(result.Value.RefreshToken);
 
             return Ok(new
             {
-                user = result.User,
-                accessToken = result.AccessToken
+                user = result.Value.User,
+                accessToken = result.Value.AccessToken
             });
         }
 
@@ -42,18 +50,22 @@ namespace demo_api.Controllers
                 return Unauthorized(new { message = "Refresh token not found in cookies" });
             }
 
-            var result = await _user.RefreshTokenHandler(refreshToken);
+            var result = await _sender.Send(new RefreshTokenCommand
+            {
+                refreshToken = refreshToken
+            });
             if (result == null)
             {
                 return Unauthorized(new { message = "Invalid refresh token" });
             }
 
-            SetRefreshTokenCookie(result.RefreshToken);
+            var res = result.Value;
+            SetRefreshTokenCookie(res!.RefreshToken);
 
             return Ok(new
             {
-                user = result.User,
-                accessToken = result.AccessToken
+                user = res.User,
+                accessToken = res.AccessToken
             });
         }
 
@@ -71,9 +83,13 @@ namespace demo_api.Controllers
 
             var accessToken = authHeader.Substring("Bearer ".Length).Trim();
 
-            var result = await _user.LogOutAsync(userId, accessToken);
-            if (!result)
-                return BadRequest(new { message = "Logout failed" });
+            var result = await _sender.Send(new LogoutCommand
+            {
+                userId=77, 
+                accessToken= accessToken
+            });
+            if (result.IsFailure)
+                throw new CustomException(result.Error.Message, result.Error.Code, result.Error.Detail);
 
             Response.Cookies.Delete("refreshToken", new CookieOptions
             {

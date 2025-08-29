@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250818085000_test-ca2")]
-    partial class testca2
+    [Migration("20250826040952_InitIntegrationTest")]
+    partial class InitIntegrationTest
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,8 +53,8 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly>("Birthday")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("Birthday")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -69,22 +69,6 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Profiles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Birthday = new DateOnly(1, 1, 1),
-                            Email = "alice@example.com",
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Birthday = new DateOnly(1, 1, 1),
-                            Email = "bob@example.com",
-                            UserId = 2
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entity.Role", b =>
@@ -102,18 +86,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            RoleName = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            RoleName = "Staff"
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entity.User", b =>
@@ -139,22 +111,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Password = "hashedpass1",
-                            RefreshToken = "",
-                            Username = "Alice"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Password = "hashedpass2",
-                            RefreshToken = "",
-                            Username = "Bob"
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entity.UserRole", b =>
@@ -170,18 +126,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("UserRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entity.Profile", b =>

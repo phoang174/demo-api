@@ -85,7 +85,7 @@ namespace demo_api.Controllers
 
             var result = await _sender.Send(new LogoutCommand
             {
-                userId=77, 
+                userId= userId, 
                 accessToken= accessToken
             });
             if (result.IsFailure)

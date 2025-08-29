@@ -54,7 +54,7 @@ namespace demo_api.Controllers
             {
                 refreshToken = refreshToken
             });
-            if (result == null)
+            if (result.IsFailure)
             {
                 return Unauthorized(new { message = "Invalid refresh token" });
             }

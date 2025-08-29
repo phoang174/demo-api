@@ -26,7 +26,7 @@ namespace Infrastructure.Services
                 //new Claim(ClaimTypes.Role, user.Role)
             };
             var signature = _config["Jwt:AccessKey"]!;    
-            return GenerateToken(claims, TimeSpan.FromMinutes(60), signature);
+            return GenerateToken(claims, TimeSpan.FromSeconds(5), signature);
         }
 
         public string GenerateRefreshToken(User user)
